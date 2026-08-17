@@ -1,4 +1,10 @@
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
+declare global {
+  interface Window {
+    __API_BASE__?: string;
+  }
+}
+
+const API_BASE = window.__API_BASE__ || import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
 export class ApiError extends Error {
   status: number;
