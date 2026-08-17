@@ -68,6 +68,34 @@ def listar_admin(
     return query.order_by(Convocation.creado_en.desc()).all()
 
 
+PREFIJOS_REGIMEN = {"CAS": "CAS", "LOCADOR": "LOC"}
+
+
+@router_admin.get("/siguiente-codigo")
+def siguiente_codigo(
+    regimen: str = Query(...),
+    db: Session = Depends(get_db),
+    usuario: User = Depends(require_roles("ADMINISTRADOR", "RRHH")),
+):
+    prefijo = PREFIJOS_REGIMEN.get(regimen)
+    if not prefijo:
+        raise HTTPException(400, "Este regimen no genera codigo automatico")
+
+    anio = datetime.utcnow().year
+    patron = f"{prefijo}-{anio}-"
+    existentes = db.query(Convocation.codigo).filter(Convocation.codigo.like(f"{patron}%")).all()
+
+    max_num = 0
+    for (codigo,) in existentes:
+        try:
+            num = int(codigo.rsplit("-", 1)[-1])
+            max_num = max(max_num, num)
+        except ValueError:
+            continue
+
+    return {"codigo": f"{patron}{max_num + 1:03d}"}
+
+
 @router_admin.get("/{convocation_id}", response_model=ConvocationOut)
 def detalle_admin(
     convocation_id: int,

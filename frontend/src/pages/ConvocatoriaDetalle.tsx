@@ -47,7 +47,8 @@ export default function ConvocatoriaDetalle() {
     <div>
       <h1 className="text-2xl font-bold text-blue-900">{conv.nombre}</h1>
       <p className="text-sm text-gray-500 mb-4">
-        {conv.codigo} &middot; {conv.regimen === "CAS" ? "CAS" : "Locador y otros"} &middot; {conv.dependencia}
+        {conv.codigo} &middot; {conv.regimen === "LOCADOR" ? "Locador" : conv.regimen === "OTROS" ? "Otros" : "CAS"} &middot;{" "}
+        {conv.dependencia}
         {conv.es_en_sede && conv.sede ? ` · ${conv.sede}` : " · Remoto"}
       </p>
 
