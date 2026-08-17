@@ -17,10 +17,13 @@ class Convocation(Base):
     id = Column(Integer, primary_key=True)
     codigo = Column(String, nullable=False, unique=True, index=True)
     nombre = Column(String, nullable=False)
-    regimen = Column(String, default="")  # CAS / 728 / OTROS
+    regimen = Column(String, default="")  # CAS / LOCADOR_OTROS
     dependencia = Column(String, default="")
-    sede = Column(String, default="")
-    descripcion = Column(String, default="")
+    es_en_sede = Column(Boolean, default=False)
+    sede = Column(String, default="")  # departamento seleccionado, solo si es_en_sede=True
+    descripcion = Column(String, default="")  # "Acerca del puesto"
+    requisitos_texto = Column(String, default="")
+    deseable_texto = Column(String, default="")
     objetivo = Column(String, default="")
     estado = Column(String, nullable=False, default="BORRADOR")
 

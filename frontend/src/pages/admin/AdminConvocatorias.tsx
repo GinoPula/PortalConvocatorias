@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, ApiError } from "../../api/client";
 import type { ConvocatoriaListItem } from "../../api/types";
+import { DEPARTAMENTOS_PERU } from "../../data/departamentos";
 
 export default function AdminConvocatorias() {
   const [lista, setLista] = useState<ConvocatoriaListItem[]>([]);
   const [mostrarForm, setMostrarForm] = useState(false);
+  const [esEnSede, setEsEnSede] = useState(false);
   const [error, setError] = useState("");
 
   async function cargar() {
@@ -26,11 +28,15 @@ export default function AdminConvocatorias() {
         nombre: form.get("nombre"),
         regimen: form.get("regimen"),
         dependencia: form.get("dependencia"),
-        sede: form.get("sede"),
+        es_en_sede: form.get("es_en_sede") === "on",
+        sede: form.get("es_en_sede") === "on" ? form.get("departamento") : "",
         descripcion: form.get("descripcion"),
+        requisitos_texto: form.get("requisitos_texto"),
+        deseable_texto: form.get("deseable_texto"),
         objetivo: "",
       });
       setMostrarForm(false);
+      setEsEnSede(false);
       cargar();
     } catch (err) {
       setError(err instanceof ApiError ? String(err.detail) : "Error al crear");
@@ -62,16 +68,57 @@ export default function AdminConvocatorias() {
       {mostrarForm && (
         <form onSubmit={crear} className="bg-white border border-gray-200 rounded-lg p-5 mb-6 grid grid-cols-2 gap-3">
           {error && <div className="col-span-2 text-red-600 text-sm">{error}</div>}
+
           <input name="codigo" placeholder="Codigo (ej. CAS-2026-002)" className="border border-gray-300 rounded px-3 py-2" required />
-          <input name="nombre" placeholder="Nombre de la convocatoria" className="border border-gray-300 rounded px-3 py-2" required />
-          <select name="regimen" className="border border-gray-300 rounded px-3 py-2">
+          <select name="regimen" className="border border-gray-300 rounded px-3 py-2" required defaultValue="CAS">
             <option value="CAS">CAS</option>
-            <option value="728">728</option>
-            <option value="OTROS">Otros</option>
+            <option value="LOCADOR_OTROS">Locador y otros</option>
           </select>
-          <input name="dependencia" placeholder="Dependencia" className="border border-gray-300 rounded px-3 py-2" />
-          <input name="sede" placeholder="Sede" className="border border-gray-300 rounded px-3 py-2" />
-          <textarea name="descripcion" placeholder="Descripcion" className="border border-gray-300 rounded px-3 py-2 col-span-2" />
+
+          <input
+            name="nombre"
+            placeholder="Nombre de la Convocatoria"
+            className="border border-gray-300 rounded px-3 py-2 col-span-2"
+            required
+          />
+
+          <input name="dependencia" placeholder="Dependencia" className="border border-gray-300 rounded px-3 py-2 col-span-2" />
+
+          <label className="flex items-center gap-2 text-sm col-span-2">
+            <input type="checkbox" name="es_en_sede" checked={esEnSede} onChange={(e) => setEsEnSede(e.target.checked)} />
+            La convocatoria es en una sede/local del ministerio
+          </label>
+
+          {esEnSede && (
+            <select name="departamento" className="border border-gray-300 rounded px-3 py-2 col-span-2" required>
+              <option value="">Selecciona el departamento</option>
+              {DEPARTAMENTOS_PERU.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+            </select>
+          )}
+
+          <textarea
+            name="descripcion"
+            placeholder="Acerca del puesto"
+            className="border border-gray-300 rounded px-3 py-2 col-span-2"
+            rows={3}
+          />
+          <textarea
+            name="requisitos_texto"
+            placeholder="Requisitos"
+            className="border border-gray-300 rounded px-3 py-2 col-span-2"
+            rows={3}
+          />
+          <textarea
+            name="deseable_texto"
+            placeholder="Deseable (Habilidades Tecnicas)"
+            className="border border-gray-300 rounded px-3 py-2 col-span-2"
+            rows={3}
+          />
+
           <button className="bg-blue-700 text-white rounded py-2 col-span-2">Crear en BORRADOR</button>
         </form>
       )}
@@ -84,7 +131,7 @@ export default function AdminConvocatorias() {
                 {c.nombre}
               </Link>
               <div className="text-sm text-gray-500">
-                {c.codigo} &middot; {c.sede} &middot; <span className="font-medium">{c.estado}</span>
+                {c.codigo} &middot; {c.sede || "Remoto"} &middot; <span className="font-medium">{c.estado}</span>
               </div>
             </div>
             <div className="flex gap-2">

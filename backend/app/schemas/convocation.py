@@ -38,8 +38,11 @@ class ConvocationIn(BaseModel):
     nombre: str
     regimen: str = ""
     dependencia: str = ""
+    es_en_sede: bool = False
     sede: str = ""
     descripcion: str = ""
+    requisitos_texto: str = ""
+    deseable_texto: str = ""
     objetivo: str = ""
     fecha_inicio: datetime | None = None
     fecha_cierre: datetime | None = None
@@ -74,8 +77,11 @@ class ConvocationOut(BaseModel):
     nombre: str
     regimen: str
     dependencia: str
+    es_en_sede: bool
     sede: str
     descripcion: str
+    requisitos_texto: str
+    deseable_texto: str
     objetivo: str
     estado: str
     fecha_publicacion: datetime | None

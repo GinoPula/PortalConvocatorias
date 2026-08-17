@@ -37,8 +37,11 @@ export interface Convocatoria {
   nombre: string;
   regimen: string;
   dependencia: string;
+  es_en_sede: boolean;
   sede: string;
   descripcion: string;
+  requisitos_texto: string;
+  deseable_texto: string;
   objetivo: string;
   estado: string;
   fecha_publicacion: string | null;

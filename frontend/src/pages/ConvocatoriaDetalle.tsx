@@ -47,9 +47,28 @@ export default function ConvocatoriaDetalle() {
     <div>
       <h1 className="text-2xl font-bold text-blue-900">{conv.nombre}</h1>
       <p className="text-sm text-gray-500 mb-4">
-        {conv.codigo} &middot; {conv.regimen} &middot; {conv.dependencia} &middot; {conv.sede}
+        {conv.codigo} &middot; {conv.regimen === "CAS" ? "CAS" : "Locador y otros"} &middot; {conv.dependencia}
+        {conv.es_en_sede && conv.sede ? ` · ${conv.sede}` : " · Remoto"}
       </p>
-      <p className="text-gray-700 mb-6">{conv.descripcion}</p>
+
+      {conv.descripcion && (
+        <div className="mb-4">
+          <h2 className="text-sm font-semibold text-blue-900 mb-1">Acerca del puesto</h2>
+          <p className="text-gray-700 whitespace-pre-line">{conv.descripcion}</p>
+        </div>
+      )}
+      {conv.requisitos_texto && (
+        <div className="mb-4">
+          <h2 className="text-sm font-semibold text-blue-900 mb-1">Requisitos</h2>
+          <p className="text-gray-700 whitespace-pre-line">{conv.requisitos_texto}</p>
+        </div>
+      )}
+      {conv.deseable_texto && (
+        <div className="mb-6">
+          <h2 className="text-sm font-semibold text-blue-900 mb-1">Deseable (Habilidades Tecnicas)</h2>
+          <p className="text-gray-700 whitespace-pre-line">{conv.deseable_texto}</p>
+        </div>
+      )}
 
       <h2 className="text-lg font-semibold text-blue-900 mb-3">Plazas</h2>
       <div className="grid gap-4">
