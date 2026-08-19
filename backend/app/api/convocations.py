@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session, joinedload
 from ..core.database import get_db
 from ..core.security import require_roles
 from ..models import Convocation, Position, Requirement, User
-from ..schemas.convocation import ConvocationIn, ConvocationOut, ConvocationListItem, PositionIn
+from ..schemas.convocation import ConvocationIn, ConvocationOut, ConvocationListItem, PositionIn, PositionUpdate
 
 router_public = APIRouter(prefix="/api/convocatorias", tags=["convocatorias-publico"])
 router_admin = APIRouter(prefix="/api/admin/convocatorias", tags=["convocatorias-admin"])
@@ -166,6 +166,54 @@ def agregar_plaza(
     db.flush()
     for req in requisitos_in:
         db.add(Requirement(position_id=plaza.id, **req))
+    db.commit()
+    db.refresh(conv)
+    return conv
+
+
+@router_admin.put("/{convocation_id}/plazas/{position_id}", response_model=ConvocationOut)
+def editar_plaza(
+    convocation_id: int,
+    position_id: int,
+    payload: PositionUpdate,
+    db: Session = Depends(get_db),
+    usuario: User = Depends(require_roles("ADMINISTRADOR", "RRHH")),
+):
+    conv = db.query(Convocation).filter(Convocation.id == convocation_id, Convocation.eliminado == False).first()  # noqa: E712
+    if not conv:
+        raise HTTPException(404, "Convocatoria no encontrada")
+
+    plaza = db.query(Position).filter(
+        Position.id == position_id, Position.convocation_id == convocation_id, Position.eliminado == False  # noqa: E712
+    ).first()
+    if not plaza:
+        raise HTTPException(404, "Plaza no encontrada")
+
+    for campo, valor in payload.model_dump().items():
+        setattr(plaza, campo, valor)
+    db.commit()
+    db.refresh(conv)
+    return conv
+
+
+@router_admin.delete("/{convocation_id}/plazas/{position_id}", response_model=ConvocationOut)
+def eliminar_plaza(
+    convocation_id: int,
+    position_id: int,
+    db: Session = Depends(get_db),
+    usuario: User = Depends(require_roles("ADMINISTRADOR", "RRHH")),
+):
+    conv = db.query(Convocation).filter(Convocation.id == convocation_id, Convocation.eliminado == False).first()  # noqa: E712
+    if not conv:
+        raise HTTPException(404, "Convocatoria no encontrada")
+
+    plaza = db.query(Position).filter(
+        Position.id == position_id, Position.convocation_id == convocation_id, Position.eliminado == False  # noqa: E712
+    ).first()
+    if not plaza:
+        raise HTTPException(404, "Plaza no encontrada")
+
+    plaza.eliminado = True
     db.commit()
     db.refresh(conv)
     return conv

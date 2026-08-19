@@ -37,7 +37,13 @@ class Convocation(Base):
     creado_por = Column(Integer, ForeignKey("users.id"), nullable=True)
     actualizado_por = Column(Integer, ForeignKey("users.id"), nullable=True)
 
-    plazas = relationship("Position", back_populates="convocatoria", cascade="all, delete-orphan")
+    plazas = relationship(
+        "Position",
+        primaryjoin="and_(Position.convocation_id==Convocation.id, Position.eliminado==False)",
+        back_populates="convocatoria",
+        cascade="all, delete-orphan",
+        viewonly=False,
+    )
     documentos = relationship("ConvocationDocument", back_populates="convocatoria", cascade="all, delete-orphan")
 
 

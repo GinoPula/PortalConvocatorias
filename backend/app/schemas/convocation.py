@@ -33,6 +33,16 @@ class PositionIn(BaseModel):
     requisitos: list[RequirementIn] = []
 
 
+class PositionUpdate(BaseModel):
+    codigo: str
+    cargo: str
+    numero_plazas: int = 1
+    remuneracion: float | None = None
+    lugar: str = ""
+    tipo_contrato: str = ""
+    jornada: str = ""
+
+
 class ConvocationIn(BaseModel):
     codigo: str
     nombre: str
