@@ -11,6 +11,7 @@ import MisPostulaciones from "./pages/MisPostulaciones";
 import AdminConvocatorias from "./pages/admin/AdminConvocatorias";
 import AdminConvocatoriaDetalle from "./pages/admin/AdminConvocatoriaDetalle";
 import AdminPostulaciones from "./pages/admin/AdminPostulaciones";
+import AdminUsuarios from "./pages/admin/AdminUsuarios";
 
 const ROLES_STAFF = ["ADMINISTRADOR", "RRHH", "EVALUADOR", "SUPERVISOR", "AUDITOR"];
 
@@ -52,6 +53,14 @@ function App() {
         <Route path="convocatorias" element={<AdminConvocatorias />} />
         <Route path="convocatorias/:id" element={<AdminConvocatoriaDetalle />} />
         <Route path="postulaciones" element={<AdminPostulaciones />} />
+        <Route
+          path="usuarios"
+          element={
+            <RutaProtegida rolesPermitidos={["ADMINISTRADOR"]}>
+              <AdminUsuarios />
+            </RutaProtegida>
+          }
+        />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -4,6 +4,13 @@ export interface Usuario {
   roles: string[];
 }
 
+export interface UsuarioStaff {
+  id: number;
+  email: string;
+  roles: string[];
+  activo: boolean;
+}
+
 export interface Requisito {
   id: number;
   tipo: string;

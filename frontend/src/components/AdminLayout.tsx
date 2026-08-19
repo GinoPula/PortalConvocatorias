@@ -19,6 +19,11 @@ export default function AdminLayout() {
           <Link to="/admin/postulaciones" className="px-3 py-2 rounded hover:bg-blue-900">
             Postulaciones
           </Link>
+          {usuario?.roles.includes("ADMINISTRADOR") && (
+            <Link to="/admin/usuarios" className="px-3 py-2 rounded hover:bg-blue-900">
+              Usuarios
+            </Link>
+          )}
           <Link to="/" className="px-3 py-2 rounded hover:bg-blue-900 mt-4 text-blue-300">
             &larr; Volver al portal publico
           </Link>

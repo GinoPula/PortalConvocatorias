@@ -55,3 +55,36 @@ class UsuarioOut(BaseModel):
     id: int
     email: str
     roles: list[str]
+
+
+ROLES_STAFF = {"ADMINISTRADOR", "RRHH", "EVALUADOR", "SUPERVISOR", "AUDITOR"}
+
+
+class UsuarioStaffIn(BaseModel):
+    email: EmailStr
+    password: str
+    roles: list[str]
+
+    @field_validator("password")
+    @classmethod
+    def validar_password_segura(cls, v):
+        if len(v) < 8 or not re.search(r"[A-Za-z]", v) or not re.search(r"\d", v):
+            raise ValueError("La contrasena debe tener minimo 8 caracteres, con letras y numeros")
+        return v
+
+    @field_validator("roles")
+    @classmethod
+    def validar_roles(cls, v):
+        if not v:
+            raise ValueError("Debe asignar al menos un rol")
+        invalidos = set(v) - ROLES_STAFF
+        if invalidos:
+            raise ValueError(f"Roles invalidos: {', '.join(invalidos)}")
+        return v
+
+
+class UsuarioStaffOut(BaseModel):
+    id: int
+    email: str
+    roles: list[str]
+    activo: bool
