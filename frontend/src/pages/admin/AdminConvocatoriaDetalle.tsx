@@ -66,13 +66,18 @@ export default function AdminConvocatoriaDetalle() {
 
   async function agregarCriterio(positionId: number, e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setError("");
     const form = new FormData(e.currentTarget);
-    await api.post(`/api/admin/plazas/${positionId}/criterios`, {
-      nombre: form.get("nombre"),
-      puntaje_maximo: Number(form.get("puntaje_maximo")),
-    });
-    e.currentTarget.reset();
-    alert("Criterio agregado");
+    try {
+      await api.post(`/api/admin/plazas/${positionId}/criterios`, {
+        nombre: form.get("nombre"),
+        puntaje_maximo: Number(form.get("puntaje_maximo")),
+      });
+      e.currentTarget.reset();
+      cargar();
+    } catch (err) {
+      setError(err instanceof ApiError ? String(err.detail) : "Error al agregar el criterio");
+    }
   }
 
   if (!conv) return <p className="text-gray-500">Cargando...</p>;
@@ -116,10 +121,14 @@ export default function AdminConvocatoriaDetalle() {
               <div className="text-sm mb-3">
                 Requisitos: {plaza.requisitos.map((r) => `${r.tipo}=${r.valor}`).join(", ") || "sin requisitos"}
               </div>
+              <div className="text-sm mb-3">
+                Criterios de puntaje:{" "}
+                {plaza.criterios_puntaje.map((c) => `${c.nombre} (max ${c.puntaje_maximo})`).join(", ") || "sin criterios"}
+              </div>
               <form onSubmit={(e) => agregarCriterio(plaza.id, e)} className="flex gap-2 items-center text-sm">
                 <input name="nombre" placeholder="Criterio de puntaje (ej. Entrevista)" className="border border-gray-300 rounded px-2 py-1" required />
                 <input name="puntaje_maximo" type="number" placeholder="Puntaje maximo" className="border border-gray-300 rounded px-2 py-1 w-32" required />
-                <button className="bg-blue-100 text-blue-800 rounded px-3 py-1">Agregar criterio</button>
+                <button className="bg-blue-700 text-white rounded px-3 py-1.5 font-medium">Agregar criterio</button>
               </form>
             </div>
           )
