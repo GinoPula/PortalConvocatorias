@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session, joinedload
 
 from ..core.database import get_db
@@ -10,6 +10,7 @@ from ..models import (
     Application,
     ApplicationStatusHistory,
     Position,
+    Postulant,
     User,
     TRANSICIONES_PERMITIDAS,
 )
@@ -20,6 +21,8 @@ from ..schemas.application import (
     TransicionEstado,
     ValidacionPrevia,
 )
+from ..services.audit import registrar
+from ..services.notifications import notificar
 from ..services.requirements_engine import validar_requisitos
 
 router_postulante = APIRouter(prefix="/api/postulante/postulaciones", tags=["postulaciones-postulante"])
@@ -112,6 +115,12 @@ def postular(payload: ApplicationCreate, request: Request, db: Session = Depends
     db.flush()
     aplicacion.codigo_constancia = f"CONST-{aplicacion.id}-{uuid.uuid4().hex[:8].upper()}"
     db.add(ApplicationStatusHistory(application_id=aplicacion.id, estado_anterior=None, estado_nuevo="RECIBIDA"))
+    registrar(db, postulante.user_id, "CREAR", "APPLICATION", aplicacion.id, valor_nuevo=aplicacion.codigo_constancia)
+    notificar(
+        db, postulante.user_id, "POSTULACION_RECIBIDA",
+        f"Postulacion recibida: {plaza.cargo}",
+        f"Tu postulacion a '{plaza.cargo}' fue registrada. Codigo de constancia: {aplicacion.codigo_constancia}.",
+    )
     db.commit()
     db.refresh(aplicacion)
     return aplicacion
@@ -143,6 +152,7 @@ def retirar_postulacion(application_id: int, db: Session = Depends(get_db), post
         raise HTTPException(400, f"No se puede retirar una postulacion en estado '{aplicacion.estado}'")
 
     db.add(ApplicationStatusHistory(application_id=aplicacion.id, estado_anterior=aplicacion.estado, estado_nuevo="RETIRADA"))
+    registrar(db, postulante.user_id, "CAMBIO_ESTADO", "APPLICATION", aplicacion.id, valor_anterior=aplicacion.estado, valor_nuevo="RETIRADA")
     aplicacion.estado = "RETIRADA"
     db.commit()
     db.refresh(aplicacion)
@@ -155,6 +165,9 @@ def retirar_postulacion(application_id: int, db: Session = Depends(get_db), post
 def listar_admin(
     position_id: int | None = None,
     estado: str | None = None,
+    q: str | None = None,
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
     usuario: User = Depends(require_roles("ADMINISTRADOR", "RRHH", "EVALUADOR", "SUPERVISOR", "AUDITOR")),
 ):
@@ -163,7 +176,28 @@ def listar_admin(
         query = query.filter(Application.position_id == position_id)
     if estado:
         query = query.filter(Application.estado == estado)
-    return query.order_by(Application.creado_en.desc()).all()
+    if q:
+        like = f"%{q}%"
+        query = query.join(Postulant, Application.postulant_id == Postulant.id).filter(
+            (Postulant.nombres.ilike(like)) | (Postulant.apellidos.ilike(like)) | (Postulant.numero_documento.ilike(like))
+        )
+    return query.order_by(Application.creado_en.desc()).offset(offset).limit(limit).all()
+
+
+@router_admin.get("/{application_id}/perfil")
+def perfil_postulante(
+    application_id: int,
+    db: Session = Depends(get_db),
+    usuario: User = Depends(require_roles("ADMINISTRADOR", "RRHH", "EVALUADOR", "SUPERVISOR", "AUDITOR")),
+):
+    """Resultado del cuestionario de perfil (services/perfil_screening.py) del
+    postulante de esta postulacion, para todos los cargos que haya completado."""
+    aplicacion = db.query(Application).options(joinedload(Application.postulante)).filter(
+        Application.id == application_id
+    ).first()
+    if not aplicacion:
+        raise HTTPException(404, "Postulacion no encontrada")
+    return aplicacion.postulante.evaluaciones_perfil or {}
 
 
 @router_admin.post("/{application_id}/transicion/{nuevo_estado}", response_model=ApplicationOut)
@@ -189,6 +223,13 @@ def cambiar_estado_admin(
         comentario=payload.comentario,
         cambiado_por=usuario.id,
     ))
+    registrar(db, usuario.id, "CAMBIO_ESTADO", "APPLICATION", aplicacion.id, valor_anterior=aplicacion.estado, valor_nuevo=nuevo_estado)
+    notificar(
+        db, aplicacion.postulante.user_id, "CAMBIO_ESTADO",
+        f"Tu postulacion cambio de estado: {nuevo_estado}",
+        f"Tu postulacion (constancia {aplicacion.codigo_constancia}) paso de {aplicacion.estado} a {nuevo_estado}."
+        + (f" Comentario: {payload.comentario}" if payload.comentario else ""),
+    )
     aplicacion.estado = nuevo_estado
     db.commit()
     db.refresh(aplicacion)

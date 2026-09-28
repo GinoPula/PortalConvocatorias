@@ -7,6 +7,8 @@ from ..core.database import get_db
 from ..core.security import get_current_user, hash_password, verify_password
 from ..models import User, Postulant, Role
 from ..schemas.auth import RegistroPostulante, LoginRequest, UsuarioOut
+from ..services.audit import registrar
+from ..services.notifications import notificar
 from ..services.perfil_screening import evaluar_perfil, listar_perfiles
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -73,6 +75,12 @@ def registrar_postulante(payload: RegistroPostulante, db: Session = Depends(get_
         evaluaciones_perfil=evaluaciones,
     )
     db.add(postulante)
+    registrar(db, user.id, "CREAR", "USER", user.id, valor_nuevo="registro de postulante")
+    notificar(
+        db, user.id, "REGISTRO",
+        "Bienvenido al Portal de Convocatorias MVCS",
+        f"Tu cuenta {user.email} fue creada correctamente.",
+    )
     db.commit()
     return _serializar(user)
 
@@ -86,12 +94,18 @@ def login(payload: LoginRequest, request: Request, db: Session = Depends(get_db)
         raise HTTPException(401, "Correo o contrasena incorrectos")
 
     request.session["user_id"] = user.id
+    registrar(db, user.id, "LOGIN", "USER", user.id)
+    db.commit()
     return _serializar(user)
 
 
 @router.post("/logout")
-def logout(request: Request):
+def logout(request: Request, db: Session = Depends(get_db)):
+    user_id = request.session.get("user_id")
     request.session.clear()
+    if user_id:
+        registrar(db, user_id, "LOGOUT", "USER", user_id)
+        db.commit()
     return {"ok": True}
 
 

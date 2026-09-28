@@ -10,19 +10,32 @@ const ROLES_DISPONIBLES = [
   { valor: "ADMINISTRADOR", etiqueta: "Administrador (acceso total)" },
 ];
 
+const PAGINA = 20;
+
 export default function AdminUsuarios() {
   const [lista, setLista] = useState<UsuarioStaff[]>([]);
+  const [busqueda, setBusqueda] = useState("");
+  const [offset, setOffset] = useState(0);
+  const [hayMas, setHayMas] = useState(false);
   const [mostrarForm, setMostrarForm] = useState(false);
   const [rolesSeleccionados, setRolesSeleccionados] = useState<string[]>([]);
   const [error, setError] = useState("");
+  const [mensaje, setMensaje] = useState("");
 
-  async function cargar() {
-    setLista(await api.get("/api/admin/usuarios"));
+  async function cargar(desdeCero: boolean) {
+    const nuevoOffset = desdeCero ? 0 : offset;
+    const query = new URLSearchParams({ limit: String(PAGINA), offset: String(nuevoOffset) });
+    if (busqueda) query.set("q", busqueda);
+    const pagina = await api.get<UsuarioStaff[]>(`/api/admin/usuarios?${query}`);
+    setLista((prev) => (desdeCero ? pagina : [...prev, ...pagina]));
+    setOffset(nuevoOffset + pagina.length);
+    setHayMas(pagina.length === PAGINA);
   }
 
   useEffect(() => {
-    cargar();
-  }, []);
+    cargar(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [busqueda]);
 
   function alternarRol(rol: string) {
     setRolesSeleccionados((prev) => (prev.includes(rol) ? prev.filter((r) => r !== rol) : [...prev, rol]));
@@ -40,7 +53,7 @@ export default function AdminUsuarios() {
       });
       setMostrarForm(false);
       setRolesSeleccionados([]);
-      cargar();
+      cargar(true);
     } catch (err) {
       setError(err instanceof ApiError ? String(err.detail) : "Error al crear usuario");
     }
@@ -48,7 +61,18 @@ export default function AdminUsuarios() {
 
   async function alternarActivo(u: UsuarioStaff) {
     await api.post(`/api/admin/usuarios/${u.id}/${u.activo ? "desactivar" : "activar"}`);
-    cargar();
+    cargar(true);
+  }
+
+  async function resetearPassword(u: UsuarioStaff) {
+    if (!confirm(`Generar una contrasena temporal nueva para ${u.email}? La contrasena actual dejara de funcionar.`)) return;
+    setMensaje("");
+    try {
+      const r = await api.post<{ password_temporal: string }>(`/api/admin/usuarios/${u.id}/resetear-password`);
+      setMensaje(`Contrasena temporal para ${u.email}: ${r.password_temporal} (compartela por un canal seguro; no se volvera a mostrar)`);
+    } catch (err) {
+      setError(err instanceof ApiError ? String(err.detail) : "Error al resetear la contrasena");
+    }
   }
 
   return (
@@ -59,6 +83,15 @@ export default function AdminUsuarios() {
           {mostrarForm ? "Cancelar" : "+ Nuevo usuario"}
         </button>
       </div>
+
+      {mensaje && (
+        <div className="bg-amber-50 border border-amber-300 text-amber-900 rounded p-3 text-sm mb-4 flex justify-between items-start gap-4">
+          <span>{mensaje}</span>
+          <button onClick={() => setMensaje("")} className="text-amber-700 hover:underline shrink-0">
+            Cerrar
+          </button>
+        </div>
+      )}
 
       {mostrarForm && (
         <form onSubmit={crear} className="bg-white border border-gray-200 rounded-lg p-5 mb-6 grid gap-3">
@@ -89,6 +122,13 @@ export default function AdminUsuarios() {
         </form>
       )}
 
+      <input
+        value={busqueda}
+        onChange={(e) => setBusqueda(e.target.value)}
+        placeholder="Buscar por correo..."
+        className="border border-gray-300 rounded px-3 py-2 mb-4 w-full max-w-sm"
+      />
+
       <div className="grid gap-3">
         {lista.map((u) => (
           <div key={u.id} className="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between">
@@ -99,16 +139,27 @@ export default function AdminUsuarios() {
                 <span className={u.activo ? "text-green-700" : "text-red-700"}>{u.activo ? "Activo" : "Desactivado"}</span>
               </div>
             </div>
-            <button
-              onClick={() => alternarActivo(u)}
-              className={`text-xs px-3 py-1.5 rounded ${u.activo ? "bg-red-50 text-red-700" : "bg-green-50 text-green-700"}`}
-            >
-              {u.activo ? "Desactivar" : "Activar"}
-            </button>
+            <div className="flex gap-2">
+              <button onClick={() => resetearPassword(u)} className="text-xs px-3 py-1.5 rounded bg-blue-50 text-blue-700">
+                Restablecer contrasena
+              </button>
+              <button
+                onClick={() => alternarActivo(u)}
+                className={`text-xs px-3 py-1.5 rounded ${u.activo ? "bg-red-50 text-red-700" : "bg-green-50 text-green-700"}`}
+              >
+                {u.activo ? "Desactivar" : "Activar"}
+              </button>
+            </div>
           </div>
         ))}
         {lista.length === 0 && <p className="text-gray-400 text-sm">No hay usuarios de staff creados todavia.</p>}
       </div>
+
+      {hayMas && (
+        <button onClick={() => cargar(false)} className="mt-4 text-sm bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded">
+          Cargar mas
+        </button>
+      )}
     </div>
   );
 }

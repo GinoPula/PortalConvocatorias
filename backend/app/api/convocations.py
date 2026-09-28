@@ -7,6 +7,7 @@ from ..core.database import get_db
 from ..core.security import require_roles
 from ..models import Convocation, Position, Requirement, User
 from ..schemas.convocation import ConvocationIn, ConvocationOut, ConvocationListItem, PositionIn, PositionUpdate
+from ..services.audit import registrar
 
 router_public = APIRouter(prefix="/api/convocatorias", tags=["convocatorias-publico"])
 router_admin = APIRouter(prefix="/api/admin/convocatorias", tags=["convocatorias-admin"])
@@ -59,13 +60,19 @@ def detalle_publico(convocation_id: int, db: Session = Depends(get_db)):
 @router_admin.get("", response_model=list[ConvocationListItem])
 def listar_admin(
     estado: str | None = None,
+    q: str | None = None,
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
     usuario: User = Depends(require_roles("ADMINISTRADOR", "RRHH", "AUDITOR")),
 ):
     query = _query_base(db)
     if estado:
         query = query.filter(Convocation.estado == estado)
-    return query.order_by(Convocation.creado_en.desc()).all()
+    if q:
+        like = f"%{q}%"
+        query = query.filter((Convocation.nombre.ilike(like)) | (Convocation.codigo.ilike(like)))
+    return query.order_by(Convocation.creado_en.desc()).offset(offset).limit(limit).all()
 
 
 PREFIJOS_REGIMEN = {"CAS": "CAS", "LOCADOR": "LOC"}
@@ -118,6 +125,8 @@ def crear(
         raise HTTPException(400, "Ya existe una convocatoria con ese codigo")
     conv = Convocation(**payload.model_dump(), creado_por=usuario.id)
     db.add(conv)
+    db.flush()
+    registrar(db, usuario.id, "CREAR", "CONVOCATION", conv.id, valor_nuevo=payload.codigo)
     db.commit()
     db.refresh(conv)
     return conv
@@ -143,6 +152,7 @@ def editar(
     for campo, valor in datos_nuevos.items():
         setattr(conv, campo, valor)
     conv.actualizado_por = usuario.id
+    registrar(db, usuario.id, "EDITAR", "CONVOCATION", conv.id)
     db.commit()
     db.refresh(conv)
     return conv
@@ -166,6 +176,7 @@ def agregar_plaza(
     db.flush()
     for req in requisitos_in:
         db.add(Requirement(position_id=plaza.id, **req))
+    registrar(db, usuario.id, "CREAR", "POSITION", plaza.id, valor_nuevo=plaza.codigo)
     db.commit()
     db.refresh(conv)
     return conv
@@ -191,6 +202,7 @@ def editar_plaza(
 
     for campo, valor in payload.model_dump().items():
         setattr(plaza, campo, valor)
+    registrar(db, usuario.id, "EDITAR", "POSITION", plaza.id)
     db.commit()
     db.refresh(conv)
     return conv
@@ -214,6 +226,7 @@ def eliminar_plaza(
         raise HTTPException(404, "Plaza no encontrada")
 
     plaza.eliminado = True
+    registrar(db, usuario.id, "ELIMINAR", "POSITION", plaza.id)
     db.commit()
     db.refresh(conv)
     return conv
@@ -243,10 +256,12 @@ def cambiar_estado(
     if nuevo_estado not in permitidos:
         raise HTTPException(400, f"No se puede pasar de '{conv.estado}' a '{nuevo_estado}'")
 
+    estado_anterior = conv.estado
     conv.estado = nuevo_estado
     if nuevo_estado == "PUBLICADA":
         conv.fecha_publicacion = datetime.utcnow()
     conv.actualizado_por = usuario.id
+    registrar(db, usuario.id, "CAMBIO_ESTADO", "CONVOCATION", conv.id, valor_anterior=estado_anterior, valor_nuevo=nuevo_estado)
     db.commit()
     db.refresh(conv)
     return conv
@@ -262,5 +277,6 @@ def eliminar(
     if not conv:
         raise HTTPException(404, "Convocatoria no encontrada")
     conv.eliminado = True  # soft delete
+    registrar(db, usuario.id, "ELIMINAR", "CONVOCATION", conv.id)
     db.commit()
     return {"ok": True}

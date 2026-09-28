@@ -8,10 +8,12 @@ import Convocatorias from "./pages/Convocatorias";
 import ConvocatoriaDetalle from "./pages/ConvocatoriaDetalle";
 import Perfil from "./pages/Perfil";
 import MisPostulaciones from "./pages/MisPostulaciones";
+import Notificaciones from "./pages/Notificaciones";
 import AdminConvocatorias from "./pages/admin/AdminConvocatorias";
 import AdminConvocatoriaDetalle from "./pages/admin/AdminConvocatoriaDetalle";
 import AdminPostulaciones from "./pages/admin/AdminPostulaciones";
 import AdminUsuarios from "./pages/admin/AdminUsuarios";
+import AdminAuditoria from "./pages/admin/AdminAuditoria";
 
 const ROLES_STAFF = ["ADMINISTRADOR", "RRHH", "EVALUADOR", "SUPERVISOR", "AUDITOR"];
 
@@ -39,6 +41,14 @@ function App() {
             </RutaProtegida>
           }
         />
+        <Route
+          path="/notificaciones"
+          element={
+            <RutaProtegida rolesPermitidos={["POSTULANTE"]}>
+              <Notificaciones />
+            </RutaProtegida>
+          }
+        />
       </Route>
 
       <Route
@@ -58,6 +68,14 @@ function App() {
           element={
             <RutaProtegida rolesPermitidos={["ADMINISTRADOR"]}>
               <AdminUsuarios />
+            </RutaProtegida>
+          }
+        />
+        <Route
+          path="auditoria"
+          element={
+            <RutaProtegida rolesPermitidos={["ADMINISTRADOR", "AUDITOR"]}>
+              <AdminAuditoria />
             </RutaProtegida>
           }
         />
