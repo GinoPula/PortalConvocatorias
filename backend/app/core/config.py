@@ -18,6 +18,10 @@ class Settings:
         o.strip() for o in os.environ.get("CORS_ORIGINS", "").split(",") if o.strip()
     ] or ["http://localhost:5173"]
     STORAGE_PATH: str = os.environ.get("STORAGE_PATH", "/app/storage")
+    # Documentacion interactiva de la API (/docs, /redoc, /openapi.json). Cerrada por
+    # defecto: cualquiera que encuentre la URL puede ver y hasta probar todos los
+    # endpoints, incluidos los de administrador. Se habilita solo con ENABLE_DOCS=true.
+    ENABLE_DOCS: bool = os.environ.get("ENABLE_DOCS", "false").lower() == "true"
 
 
 settings = Settings()
