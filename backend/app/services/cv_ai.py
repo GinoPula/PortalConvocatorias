@@ -13,6 +13,7 @@ postulaciones - el resultado se muestra para que RR.HH. lo revise.
 import io
 import json
 
+import openai
 import pdfplumber
 import pytesseract
 from openai import AsyncOpenAI
@@ -93,17 +94,30 @@ async def evaluar_cv(perfil_codigo: str, texto_cv: str) -> dict:
 
     perfil = PERFILES[perfil_codigo]
     client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
-    respuesta = await client.chat.completions.create(
-        model=settings.OPENAI_MODEL,
-        messages=[
-            {"role": "system", "content": INSTRUCCIONES.format(cargo=perfil["nombre"])},
-            {"role": "user", "content": f"Texto del CV:\n\n{texto_cv[:12000]}"},
-        ],
-        response_format={
-            "type": "json_schema",
-            "json_schema": {"name": "datos_cv", "schema": _schema_json(perfil_codigo), "strict": True},
-        },
-    )
+    try:
+        respuesta = await client.chat.completions.create(
+            model=settings.OPENAI_MODEL,
+            messages=[
+                {"role": "system", "content": INSTRUCCIONES.format(cargo=perfil["nombre"])},
+                {"role": "user", "content": f"Texto del CV:\n\n{texto_cv[:12000]}"},
+            ],
+            response_format={
+                "type": "json_schema",
+                "json_schema": {"name": "datos_cv", "schema": _schema_json(perfil_codigo), "strict": True},
+            },
+        )
+    except openai.AuthenticationError:
+        raise RuntimeError("La clave de OpenAI (OPENAI_API_KEY) no es valida. Verificala en el .env del servidor.")
+    except openai.RateLimitError as e:
+        if "credit" in str(e).lower() or "quota" in str(e).lower():
+            raise RuntimeError(
+                "La cuenta de OpenAI no tiene creditos disponibles. Carga saldo en "
+                "platform.openai.com/settings/organization/billing y vuelve a intentar."
+            )
+        raise RuntimeError("Se alcanzo el limite de uso de la API de OpenAI por ahora. Intenta de nuevo en unos minutos.")
+    except openai.APIError as e:
+        raise RuntimeError(f"Error al conectar con OpenAI: {e}")
+
     datos_extraidos = json.loads(respuesta.choices[0].message.content)
     evaluacion = evaluar_perfil(perfil_codigo, datos_extraidos)
     return {"respuestas_extraidas": datos_extraidos, "evaluacion": evaluacion}
