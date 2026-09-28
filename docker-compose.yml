@@ -28,6 +28,8 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       STORAGE_PATH: /app/storage
+      RECAPTCHA_SECRET_KEY: ${RECAPTCHA_SECRET_KEY}
+      ENABLE_DOCS: ${ENABLE_DOCS:-false}
     volumes:
       - storage:/app/storage
     ports:
@@ -41,6 +43,7 @@ services:
       - backend
     environment:
       API_BASE: ${API_BASE}
+      RECAPTCHA_SITE_KEY: ${RECAPTCHA_SITE_KEY}
     ports:
       - "86:80"
 

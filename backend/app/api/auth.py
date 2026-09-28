@@ -10,6 +10,7 @@ from ..schemas.auth import RegistroPostulante, LoginRequest, UsuarioOut
 from ..services.audit import registrar
 from ..services.notifications import notificar
 from ..services.perfil_screening import evaluar_perfil, listar_perfiles
+from ..services.recaptcha import verificar_recaptcha
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -40,7 +41,7 @@ def perfiles_disponibles():
 
 
 @router.post("/register", response_model=UsuarioOut)
-def registrar_postulante(payload: RegistroPostulante, db: Session = Depends(get_db)):
+def registrar_postulante(payload: RegistroPostulante, request: Request, db: Session = Depends(get_db)):
     if db.query(User).filter(User.email == payload.email).first():
         raise HTTPException(400, "Ya existe una cuenta con ese correo")
     if db.query(Postulant).filter(Postulant.numero_documento == payload.numero_documento).first():
@@ -82,12 +83,17 @@ def registrar_postulante(payload: RegistroPostulante, db: Session = Depends(get_
         f"Tu cuenta {user.email} fue creada correctamente.",
     )
     db.commit()
+    request.session["user_id"] = user.id
     return _serializar(user)
 
 
 @router.post("/login", response_model=UsuarioOut)
-def login(payload: LoginRequest, request: Request, db: Session = Depends(get_db)):
+async def login(payload: LoginRequest, request: Request, db: Session = Depends(get_db)):
     _revisar_rate_limit(payload.email.lower())
+
+    ip = request.client.host if request.client else ""
+    if not await verificar_recaptcha(payload.recaptcha_token, ip):
+        raise HTTPException(400, "Verificacion de reCAPTCHA invalida. Vuelve a marcar la casilla.")
 
     user = db.query(User).filter(User.email == payload.email, User.activo == True).first()  # noqa: E712
     if not user or not verify_password(payload.password, user.password_hash):

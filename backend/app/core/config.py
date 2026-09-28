@@ -22,6 +22,9 @@ class Settings:
     # defecto: cualquiera que encuentre la URL puede ver y hasta probar todos los
     # endpoints, incluidos los de administrador. Se habilita solo con ENABLE_DOCS=true.
     ENABLE_DOCS: bool = os.environ.get("ENABLE_DOCS", "false").lower() == "true"
+    # Secreto de Google reCAPTCHA v2, usado para verificar el login. La clave publica
+    # (site key) va en el frontend, no aqui. Ver services/recaptcha.py.
+    RECAPTCHA_SECRET_KEY: str = os.environ.get("RECAPTCHA_SECRET_KEY", "")
 
 
 settings = Settings()

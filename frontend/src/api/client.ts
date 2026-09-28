@@ -1,8 +1,16 @@
 declare global {
   interface Window {
     __API_BASE__?: string;
+    __RECAPTCHA_SITE_KEY__?: string;
+    grecaptcha?: {
+      render: (container: HTMLElement, params: { sitekey: string; callback?: (token: string) => void }) => number;
+      getResponse: (widgetId?: number) => string;
+      reset: (widgetId?: number) => void;
+    };
   }
 }
+
+export const RECAPTCHA_SITE_KEY = window.__RECAPTCHA_SITE_KEY__ || "";
 
 const API_BASE = window.__API_BASE__ || import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
