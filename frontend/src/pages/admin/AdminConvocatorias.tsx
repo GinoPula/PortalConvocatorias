@@ -8,6 +8,7 @@ const REGIMENES_AUTOGENERADOS = new Set(["CAS", "LOCADOR"]);
 
 export default function AdminConvocatorias() {
   const [lista, setLista] = useState<ConvocatoriaListItem[]>([]);
+  const [busqueda, setBusqueda] = useState("");
   const [mostrarForm, setMostrarForm] = useState(false);
   const [esEnSede, setEsEnSede] = useState(false);
   const [regimen, setRegimen] = useState("CAS");
@@ -15,12 +16,14 @@ export default function AdminConvocatorias() {
   const [error, setError] = useState("");
 
   async function cargar() {
-    setLista(await api.get("/api/admin/convocatorias"));
+    const query = busqueda ? `?q=${encodeURIComponent(busqueda)}` : "";
+    setLista(await api.get(`/api/admin/convocatorias${query}`));
   }
 
   useEffect(() => {
     cargar();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [busqueda]);
 
   useEffect(() => {
     if (!mostrarForm) return;
@@ -155,6 +158,13 @@ export default function AdminConvocatorias() {
           <button className="bg-blue-700 text-white rounded py-2 col-span-2">Crear en BORRADOR</button>
         </form>
       )}
+
+      <input
+        value={busqueda}
+        onChange={(e) => setBusqueda(e.target.value)}
+        placeholder="Buscar por nombre o codigo..."
+        className="border border-gray-300 rounded px-3 py-2 mb-4 w-full max-w-sm"
+      />
 
       <div className="grid gap-3">
         {lista.map((c) => (

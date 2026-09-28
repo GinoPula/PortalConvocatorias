@@ -16,6 +16,8 @@ from ..models import (
 )
 from ..schemas.convocation import PositionOut, ScoringCriterionIn, ScoringCriterionOut
 from ..schemas.evaluation import EvaluationCreate, EvaluationOut, RankingItem
+from ..services.audit import registrar
+from ..services.notifications import notificar
 
 router = APIRouter(prefix="/api/admin/postulaciones", tags=["evaluaciones"])
 router_ranking = APIRouter(prefix="/api/admin/plazas", tags=["evaluaciones"])
@@ -102,6 +104,12 @@ def registrar_evaluacion(
         application_id=aplicacion.id, estado_anterior=aplicacion.estado, estado_nuevo=nuevo_estado,
         comentario=f"Evaluacion registrada: {payload.resultado}", cambiado_por=usuario.id,
     ))
+    registrar(db, usuario.id, "EVALUAR", "APPLICATION", aplicacion.id, valor_anterior=aplicacion.estado, valor_nuevo=payload.resultado)
+    notificar(
+        db, aplicacion.postulante.user_id, "RESULTADO",
+        f"Resultado de tu evaluacion: {payload.resultado}",
+        f"Tu postulacion (constancia {aplicacion.codigo_constancia}) fue evaluada con resultado {payload.resultado}.",
+    )
     aplicacion.estado = nuevo_estado
 
     db.commit()
@@ -133,6 +141,7 @@ def aprobar_evaluacion(
         raise HTTPException(404, "Esta postulacion aun no tiene evaluacion registrada")
     evaluacion.supervisor_id = usuario.id
     evaluacion.aprobado_por_supervisor = True
+    registrar(db, usuario.id, "CAMBIO_ESTADO", "EVALUATION", evaluacion.id, valor_nuevo="aprobado_por_supervisor")
     db.commit()
     db.refresh(evaluacion)
     return evaluacion

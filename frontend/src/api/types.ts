@@ -222,3 +222,25 @@ export interface RankingItem {
   resultado: string;
   estado_postulacion: string;
 }
+
+export interface AuditLogEntry {
+  id: number;
+  user_id: number | null;
+  usuario_email: string | null;
+  accion: string;
+  entidad: string;
+  entidad_id: number | null;
+  valor_anterior: string | null;
+  valor_nuevo: string | null;
+  ip: string;
+  creado_en: string;
+}
+
+export interface NotificationItem {
+  id: number;
+  tipo: string;
+  asunto: string;
+  mensaje: string;
+  enviada: boolean;
+  creado_en: string;
+}

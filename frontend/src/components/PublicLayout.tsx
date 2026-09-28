@@ -19,6 +19,7 @@ export default function PublicLayout() {
               <>
                 <Link to="/perfil">Mi perfil</Link>
                 <Link to="/mis-postulaciones">Mis postulaciones</Link>
+                <Link to="/notificaciones">Notificaciones</Link>
               </>
             )}
             {esStaff && <Link to="/admin">Panel administrativo</Link>}

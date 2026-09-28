@@ -24,6 +24,11 @@ export default function AdminLayout() {
               Usuarios
             </Link>
           )}
+          {(usuario?.roles.includes("ADMINISTRADOR") || usuario?.roles.includes("AUDITOR")) && (
+            <Link to="/admin/auditoria" className="px-3 py-2 rounded hover:bg-blue-900">
+              Auditoria
+            </Link>
+          )}
           <Link to="/" className="px-3 py-2 rounded hover:bg-blue-900 mt-4 text-blue-300">
             &larr; Volver al portal publico
           </Link>

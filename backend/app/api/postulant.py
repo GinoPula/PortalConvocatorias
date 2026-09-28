@@ -4,7 +4,8 @@ from sqlalchemy.orm import Session
 
 from ..core.database import get_db
 from ..core.security import require_roles
-from ..models import AcademicRecord, Document, DocumentType, Training, User, WorkExperience
+from ..models import AcademicRecord, Document, DocumentType, Notification, Training, User, WorkExperience
+from ..schemas.notification import NotificationOut
 from ..schemas.postulant import (
     EvaluacionPerfilIn,
     AcademicRecordIn,
@@ -61,6 +62,18 @@ def evaluar_perfil_cargo(payload: EvaluacionPerfilIn, db: Session = Depends(get_
     postulante.evaluaciones_perfil = {**(postulante.evaluaciones_perfil or {}), payload.perfil_codigo: resultado}
     db.commit()
     return resultado
+
+
+# ---------- Notificaciones ----------
+
+@router.get("/notificaciones", response_model=list[NotificationOut])
+def listar_notificaciones(db: Session = Depends(get_db), postulante=Depends(_requiere_postulante)):
+    return (
+        db.query(Notification)
+        .filter(Notification.user_id == postulante.user_id)
+        .order_by(Notification.creado_en.desc())
+        .all()
+    )
 
 
 # ---------- Formacion academica ----------

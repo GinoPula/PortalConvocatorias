@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy.orm import relationship
 
 from ..core.database import Base
 
@@ -21,3 +22,9 @@ class AuditLog(Base):
     valor_nuevo = Column(Text, nullable=True)
     ip = Column(String, default="")
     creado_en = Column(DateTime, default=datetime.utcnow)
+
+    usuario = relationship("User")
+
+    @property
+    def usuario_email(self):
+        return self.usuario.email if self.usuario else None
