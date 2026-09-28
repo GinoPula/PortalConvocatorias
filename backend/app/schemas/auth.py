@@ -61,6 +61,7 @@ class RegistroPostulante(BaseModel):
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
+    recaptcha_token: str
 
 
 class UsuarioOut(BaseModel):

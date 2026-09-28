@@ -1,23 +1,32 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { ApiError } from "../api/client";
+import RecaptchaBox, { type RecaptchaHandle } from "../components/RecaptchaBox";
 
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [recaptchaToken, setRecaptchaToken] = useState("");
   const [error, setError] = useState("");
+  const recaptchaRef = useRef<RecaptchaHandle>(null);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    if (!recaptchaToken) {
+      setError("Marca la casilla de verificacion antes de continuar.");
+      return;
+    }
     try {
-      await login(email, password);
+      await login(email, password, recaptchaToken);
       navigate("/");
     } catch (err) {
       setError(err instanceof ApiError ? String(err.detail) : "Error de conexion");
+      recaptchaRef.current?.reset();
+      setRecaptchaToken("");
     }
   }
 
@@ -42,6 +51,7 @@ export default function Login() {
           className="border border-gray-300 rounded px-3 py-2"
           required
         />
+        <RecaptchaBox ref={recaptchaRef} onToken={setRecaptchaToken} />
         <button type="submit" className="bg-blue-700 text-white rounded py-2 font-medium mt-2">
           Ingresar
         </button>

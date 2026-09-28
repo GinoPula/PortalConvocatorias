@@ -5,7 +5,7 @@ import type { Usuario } from "../api/types";
 interface AuthContextValue {
   usuario: Usuario | null;
   cargando: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, recaptchaToken: string) => Promise<void>;
   logout: () => Promise<void>;
   refrescar: () => Promise<void>;
 }
@@ -31,8 +31,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refrescar();
   }, []);
 
-  async function login(email: string, password: string) {
-    const u = await api.post<Usuario>("/api/auth/login", { email, password });
+  async function login(email: string, password: string, recaptchaToken: string) {
+    const u = await api.post<Usuario>("/api/auth/login", { email, password, recaptcha_token: recaptchaToken });
     setUsuario(u);
   }
 

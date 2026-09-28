@@ -7,7 +7,7 @@ import { useAuth } from "../context/AuthContext";
 
 export default function Registro() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { refrescar } = useAuth();
   const [form, setForm] = useState({
     tipo_documento: "DNI",
     numero_documento: "",
@@ -38,7 +38,7 @@ export default function Registro() {
     setError("");
     try {
       await api.post("/api/auth/register", { ...form, perfil_codigo: perfilCodigo, respuestas_perfil: respuestas });
-      await login(form.email, form.password);
+      await refrescar();
       navigate("/perfil");
     } catch (err) {
       setError(err instanceof ApiError ? String(err.detail) : "Error de conexion");
