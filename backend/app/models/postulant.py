@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, Date, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, Boolean, Column, Date, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from ..core.database import Base
@@ -26,6 +26,9 @@ class Postulant(Base):
     distrito = Column(String, default="")
     telefono = Column(String, default="")
     ruc = Column(String, default="")
+    # Resultado del cuestionario de perfil por cargo (ver services/perfil_screening.py):
+    # {"CONDUCTOR_VEHICULO_PESADO": {"cumple": bool, "motivos": [...], "respuestas": {...}}}
+    evaluaciones_perfil = Column(JSON, nullable=False, default=dict)
 
     creado_en = Column(DateTime, default=datetime.utcnow)
     actualizado_en = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

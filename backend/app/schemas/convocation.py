@@ -30,6 +30,7 @@ class PositionIn(BaseModel):
     lugar: str = ""
     tipo_contrato: str = ""
     jornada: str = ""
+    perfil_codigo: str = ""
     requisitos: list[RequirementIn] = []
 
 
@@ -74,6 +75,7 @@ class PositionOut(BaseModel):
     lugar: str
     tipo_contrato: str
     jornada: str
+    perfil_codigo: str
     requisitos: list[RequirementOut] = []
     criterios_puntaje: list[ScoringCriterionOut] = []
 

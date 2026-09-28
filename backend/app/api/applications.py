@@ -43,6 +43,22 @@ def _validacion_previa(postulante, plaza: Position) -> ValidacionPrevia:
         return ValidacionPrevia(puede_postular=False, requisitos=[], motivo_bloqueo="La convocatoria aun no inicia el periodo de postulacion")
 
     resultado = validar_requisitos(postulante, plaza.requisitos)
+
+    if plaza.perfil_codigo:
+        evaluacion = (postulante.evaluaciones_perfil or {}).get(plaza.perfil_codigo)
+        if not evaluacion:
+            return ValidacionPrevia(
+                puede_postular=False,
+                requisitos=resultado,
+                motivo_bloqueo="Debes completar el cuestionario de perfil de este cargo en Mi perfil",
+            )
+        if not evaluacion["cumple"]:
+            return ValidacionPrevia(
+                puede_postular=False,
+                requisitos=resultado,
+                motivo_bloqueo="No cumples el perfil de este cargo. " + " | ".join(evaluacion["motivos"]),
+            )
+
     falta_obligatorio = any(not r["cumple"] and r["obligatorio"] for r in resultado)
     return ValidacionPrevia(
         puede_postular=not falta_obligatorio,

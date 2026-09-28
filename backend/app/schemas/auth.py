@@ -1,4 +1,5 @@
 import re
+from typing import Any
 
 from pydantic import BaseModel, EmailStr, field_validator
 
@@ -10,9 +11,20 @@ class RegistroPostulante(BaseModel):
     apellidos: str
     email: EmailStr
     telefono: str = ""
+    ruc: str = ""
     password: str
     confirmar_password: str
     acepta_terminos: bool
+    # Cuestionario de perfil del cargo al que se postula (ver services/perfil_screening.py)
+    perfil_codigo: str = ""
+    respuestas_perfil: dict[str, Any] = {}
+
+    @field_validator("ruc")
+    @classmethod
+    def validar_ruc(cls, v):
+        if v and not re.fullmatch(r"\d{11}", v):
+            raise ValueError("El RUC debe tener 11 digitos")
+        return v
 
     @field_validator("numero_documento")
     @classmethod

@@ -7,6 +7,7 @@ from ..core.database import get_db
 from ..core.security import get_current_user, hash_password, verify_password
 from ..models import User, Postulant, Role
 from ..schemas.auth import RegistroPostulante, LoginRequest, UsuarioOut
+from ..services.perfil_screening import evaluar_perfil, listar_perfiles
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -30,12 +31,27 @@ def _serializar(user: User) -> UsuarioOut:
     return UsuarioOut(id=user.id, email=user.email, roles=[r.nombre for r in user.roles])
 
 
+@router.get("/perfiles")
+def perfiles_disponibles():
+    """Cargos con su cuestionario de perfil (preguntas y reglas), para el formulario de registro."""
+    return listar_perfiles()
+
+
 @router.post("/register", response_model=UsuarioOut)
 def registrar_postulante(payload: RegistroPostulante, db: Session = Depends(get_db)):
     if db.query(User).filter(User.email == payload.email).first():
         raise HTTPException(400, "Ya existe una cuenta con ese correo")
     if db.query(Postulant).filter(Postulant.numero_documento == payload.numero_documento).first():
         raise HTTPException(400, "Ya existe una cuenta con ese numero de documento")
+
+    evaluaciones = {}
+    if payload.perfil_codigo:
+        try:
+            evaluaciones[payload.perfil_codigo] = evaluar_perfil(payload.perfil_codigo, payload.respuestas_perfil)
+        except KeyError:
+            raise HTTPException(400, "Cargo no valido")
+        except ValueError as e:
+            raise HTTPException(400, str(e))
 
     rol_postulante = db.query(Role).filter(Role.nombre == "POSTULANTE").first()
     if not rol_postulante:
@@ -53,6 +69,8 @@ def registrar_postulante(payload: RegistroPostulante, db: Session = Depends(get_
         nombres=payload.nombres,
         apellidos=payload.apellidos,
         telefono=payload.telefono,
+        ruc=payload.ruc,
+        evaluaciones_perfil=evaluaciones,
     )
     db.add(postulante)
     db.commit()

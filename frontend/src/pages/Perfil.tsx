@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
 import { api, ApiError } from "../api/client";
-import type { DocumentoPostulante, ExperienciaLaboral, FormacionAcademica, Postulante, ResumenExperiencia } from "../api/types";
+import type {
+  DocumentoPostulante,
+  ExperienciaLaboral,
+  FormacionAcademica,
+  PerfilCargo,
+  Postulante,
+  Respuesta,
+  ResumenExperiencia,
+} from "../api/types";
+import CuestionarioPerfil from "../components/CuestionarioPerfil";
 
 export default function Perfil() {
   const [postulante, setPostulante] = useState<Postulante | null>(null);
@@ -9,6 +18,9 @@ export default function Perfil() {
   const [resumen, setResumen] = useState<ResumenExperiencia | null>(null);
   const [documentos, setDocumentos] = useState<DocumentoPostulante[]>([]);
   const [mensaje, setMensaje] = useState("");
+  const [perfiles, setPerfiles] = useState<PerfilCargo[]>([]);
+  const [perfilCodigo, setPerfilCodigo] = useState("");
+  const [respuestas, setRespuestas] = useState<Record<string, Respuesta>>({});
 
   async function cargarTodo() {
     setPostulante(await api.get("/api/postulante/profile"));
@@ -16,6 +28,7 @@ export default function Perfil() {
     setExperiencia(await api.get("/api/postulante/work-experiences"));
     setResumen(await api.get("/api/postulante/work-experiences/resumen"));
     setDocumentos(await api.get("/api/postulante/documents"));
+    setPerfiles(await api.get("/api/auth/perfiles"));
   }
 
   useEffect(() => {
@@ -35,6 +48,20 @@ export default function Perfil() {
     });
     setMensaje("Datos personales actualizados.");
     cargarTodo();
+  }
+
+  async function guardarEvaluacionPerfil(e: React.FormEvent) {
+    e.preventDefault();
+    setMensaje("");
+    try {
+      await api.post("/api/postulante/evaluacion-perfil", { perfil_codigo: perfilCodigo, respuestas });
+      setPerfilCodigo("");
+      setRespuestas({});
+      setMensaje("Cuestionario de perfil guardado.");
+      cargarTodo();
+    } catch (err) {
+      setMensaje(err instanceof ApiError ? String(err.detail) : "Error al guardar el cuestionario");
+    }
   }
 
   async function agregarFormacion(e: React.FormEvent<HTMLFormElement>) {
@@ -90,6 +117,47 @@ export default function Perfil() {
         Mi perfil &mdash; {postulante.nombres} {postulante.apellidos}
       </h1>
       {mensaje && <div className="text-blue-800 bg-blue-50 border border-blue-200 rounded p-3 text-sm">{mensaje}</div>}
+
+      <section className="bg-white border border-gray-200 rounded-lg p-5">
+        <h2 className="font-semibold text-blue-900 mb-3">Perfil por cargo</h2>
+        {Object.keys(postulante.evaluaciones_perfil).length === 0 && (
+          <p className="text-sm text-gray-500 mb-3">Aun no completaste el cuestionario de perfil de ningun cargo.</p>
+        )}
+        <div className="grid gap-2 mb-4">
+          {Object.entries(postulante.evaluaciones_perfil).map(([codigo, ev]) => (
+            <div
+              key={codigo}
+              className={`text-sm border rounded p-3 ${ev.cumple ? "border-green-300 bg-green-50 text-green-900" : "border-red-300 bg-red-50 text-red-900"}`}
+            >
+              <div className="font-medium">
+                {perfiles.find((p) => p.codigo === codigo)?.nombre ?? codigo}:{" "}
+                {ev.cumple ? "cumples el perfil" : "no cumples el perfil"}
+              </div>
+              {ev.motivos.length > 0 && (
+                <ul className="list-disc list-inside mt-1">
+                  {ev.motivos.map((m) => (
+                    <li key={m}>{m}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ))}
+        </div>
+        <form onSubmit={guardarEvaluacionPerfil} className="flex flex-col gap-3">
+          <h3 className="text-sm font-semibold text-gray-700">Completar o actualizar el cuestionario de un cargo</h3>
+          <CuestionarioPerfil
+            perfiles={perfiles}
+            perfilCodigo={perfilCodigo}
+            respuestas={respuestas}
+            onPerfilChange={(codigo) => {
+              setPerfilCodigo(codigo);
+              setRespuestas(postulante.evaluaciones_perfil[codigo]?.respuestas ?? {});
+            }}
+            onRespuesta={(id, valor) => setRespuestas((r) => ({ ...r, [id]: valor }))}
+          />
+          {perfilCodigo && <button className="bg-blue-700 text-white rounded py-2">Guardar cuestionario</button>}
+        </form>
+      </section>
 
       <section className="bg-white border border-gray-200 rounded-lg p-5">
         <h2 className="font-semibold text-blue-900 mb-3">Datos personales</h2>
