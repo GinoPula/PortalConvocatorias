@@ -5,7 +5,12 @@ from starlette.middleware.sessions import SessionMiddleware
 from .core.config import settings
 from .api import applications, audit, auth, convocations, evaluations, postulant, users
 
-app = FastAPI(title="Portal Institucional de Convocatorias y Postulaciones - MVCS")
+app = FastAPI(
+    title="Portal Institucional de Convocatorias y Postulaciones - MVCS",
+    docs_url="/docs" if settings.ENABLE_DOCS else None,
+    redoc_url="/redoc" if settings.ENABLE_DOCS else None,
+    openapi_url="/openapi.json" if settings.ENABLE_DOCS else None,
+)
 
 app.add_middleware(
     CORSMiddleware,
