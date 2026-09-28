@@ -14,6 +14,7 @@ import AdminConvocatoriaDetalle from "./pages/admin/AdminConvocatoriaDetalle";
 import AdminPostulaciones from "./pages/admin/AdminPostulaciones";
 import AdminUsuarios from "./pages/admin/AdminUsuarios";
 import AdminAuditoria from "./pages/admin/AdminAuditoria";
+import AdminCvScreening from "./pages/admin/AdminCvScreening";
 
 const ROLES_STAFF = ["ADMINISTRADOR", "RRHH", "EVALUADOR", "SUPERVISOR", "AUDITOR"];
 
@@ -63,6 +64,14 @@ function App() {
         <Route path="convocatorias" element={<AdminConvocatorias />} />
         <Route path="convocatorias/:id" element={<AdminConvocatoriaDetalle />} />
         <Route path="postulaciones" element={<AdminPostulaciones />} />
+        <Route
+          path="cv-screening"
+          element={
+            <RutaProtegida rolesPermitidos={["ADMINISTRADOR", "RRHH"]}>
+              <AdminCvScreening />
+            </RutaProtegida>
+          }
+        />
         <Route
           path="usuarios"
           element={

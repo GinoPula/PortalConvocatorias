@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
 from .core.config import settings
-from .api import applications, audit, auth, convocations, evaluations, postulant, users
+from .api import applications, audit, auth, convocations, cv_screening, evaluations, postulant, users
 
 app = FastAPI(
     title="Portal Institucional de Convocatorias y Postulaciones - MVCS",
@@ -36,6 +36,7 @@ app.include_router(evaluations.router)
 app.include_router(evaluations.router_ranking)
 app.include_router(users.router)
 app.include_router(audit.router)
+app.include_router(cv_screening.router)
 
 
 @app.get("/api/health")
