@@ -19,6 +19,11 @@ export default function AdminLayout() {
           <Link to="/admin/postulaciones" className="px-3 py-2 rounded hover:bg-blue-900">
             Postulaciones
           </Link>
+          {(usuario?.roles.includes("ADMINISTRADOR") || usuario?.roles.includes("RRHH")) && (
+            <Link to="/admin/cv-screening" className="px-3 py-2 rounded hover:bg-blue-900">
+              CV con IA
+            </Link>
+          )}
           {usuario?.roles.includes("ADMINISTRADOR") && (
             <Link to="/admin/usuarios" className="px-3 py-2 rounded hover:bg-blue-900">
               Usuarios
