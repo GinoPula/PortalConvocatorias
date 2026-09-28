@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -30,9 +31,15 @@ class PostulantOut(BaseModel):
     distrito: str
     telefono: str
     ruc: str
+    evaluaciones_perfil: dict[str, Any] = {}
 
     class Config:
         from_attributes = True
+
+
+class EvaluacionPerfilIn(BaseModel):
+    perfil_codigo: str
+    respuestas: dict[str, Any] = {}
 
 
 class AcademicRecordIn(BaseModel):

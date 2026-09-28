@@ -6,6 +6,7 @@ from ..core.database import get_db
 from ..core.security import require_roles
 from ..models import AcademicRecord, Document, DocumentType, Training, User, WorkExperience
 from ..schemas.postulant import (
+    EvaluacionPerfilIn,
     AcademicRecordIn,
     AcademicRecordOut,
     DocumentOut,
@@ -18,6 +19,7 @@ from ..schemas.postulant import (
     WorkExperienceOut,
 )
 from ..services.experience import calcular_experiencia
+from ..services.perfil_screening import evaluar_perfil
 from ..services.storage import guardar_documento_pdf, ruta_absoluta
 
 router = APIRouter(prefix="/api/postulante", tags=["postulante"])
@@ -43,6 +45,22 @@ def editar_perfil(payload: PostulantUpdate, db: Session = Depends(get_db), postu
     db.commit()
     db.refresh(postulante)
     return postulante
+
+
+@router.post("/evaluacion-perfil")
+def evaluar_perfil_cargo(payload: EvaluacionPerfilIn, db: Session = Depends(get_db), postulante=Depends(_requiere_postulante)):
+    """Completa (o corrige) el cuestionario de perfil de un cargo y guarda el resultado."""
+    try:
+        resultado = evaluar_perfil(payload.perfil_codigo, payload.respuestas)
+    except KeyError:
+        raise HTTPException(400, "Cargo no valido")
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+    # Se reasigna un dict nuevo para que SQLAlchemy detecte el cambio en la columna JSON.
+    postulante.evaluaciones_perfil = {**(postulante.evaluaciones_perfil or {}), payload.perfil_codigo: resultado}
+    db.commit()
+    return resultado
 
 
 # ---------- Formacion academica ----------

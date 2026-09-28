@@ -78,6 +78,9 @@ class Position(Base):
     lugar = Column(String, default="")
     tipo_contrato = Column(String, default="")
     jornada = Column(String, default="")
+    # Cuestionario de perfil que debe cumplir el postulante (services/perfil_screening.py).
+    # Vacio = la plaza no exige cuestionario.
+    perfil_codigo = Column(String, nullable=False, default="")
 
     eliminado = Column(Boolean, default=False)
     creado_en = Column(DateTime, default=datetime.utcnow)

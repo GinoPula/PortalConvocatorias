@@ -34,6 +34,7 @@ export interface Plaza {
   lugar: string;
   tipo_contrato: string;
   jornada: string;
+  perfil_codigo: string;
   requisitos: Requisito[];
   criterios_puntaje: CriterioPuntaje[];
 }
@@ -81,6 +82,31 @@ export interface Postulante {
   distrito: string;
   telefono: string;
   ruc: string;
+  evaluaciones_perfil: Record<string, EvaluacionPerfil>;
+}
+
+export type Respuesta = boolean | number | string | null;
+
+export interface PerfilPregunta {
+  id: string;
+  texto: string;
+  tipo: "si_no" | "numero" | "opcion";
+  eliminatoria: boolean;
+  minimo?: number;
+  opciones?: string[];
+  validas?: string[];
+}
+
+export interface PerfilCargo {
+  codigo: string;
+  nombre: string;
+  preguntas: PerfilPregunta[];
+}
+
+export interface EvaluacionPerfil {
+  cumple: boolean;
+  motivos: string[];
+  respuestas: Record<string, Respuesta>;
 }
 
 export interface FormacionAcademica {
