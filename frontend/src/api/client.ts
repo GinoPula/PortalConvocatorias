@@ -3,9 +3,8 @@ declare global {
     __API_BASE__?: string;
     __RECAPTCHA_SITE_KEY__?: string;
     grecaptcha?: {
-      render: (container: HTMLElement, params: { sitekey: string; callback?: (token: string) => void }) => number;
-      getResponse: (widgetId?: number) => string;
-      reset: (widgetId?: number) => void;
+      ready: (callback: () => void) => void;
+      execute: (siteKey: string, options: { action: string }) => Promise<string>;
     };
   }
 }

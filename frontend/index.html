@@ -9,7 +9,16 @@
     <meta name="description" content="Portal Institucional de Convocatorias y Postulaciones del Ministerio de Vivienda, Construccion y Saneamiento" />
     <title>Portal de Convocatorias MVCS</title>
     <script src="/env-config.js"></script>
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <script>
+      // reCAPTCHA v3: no tiene widget, se ejecuta en segundo plano. La clave publica
+      // recien se conoce en tiempo de arranque del contenedor (env-config.js), por
+      // eso el script de Google se agrega aqui en vez de un <script src> fijo.
+      if (window.__RECAPTCHA_SITE_KEY__) {
+        var s = document.createElement("script");
+        s.src = "https://www.google.com/recaptcha/api.js?render=" + window.__RECAPTCHA_SITE_KEY__;
+        document.head.appendChild(s);
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

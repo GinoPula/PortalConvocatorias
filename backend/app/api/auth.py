@@ -92,8 +92,8 @@ async def login(payload: LoginRequest, request: Request, db: Session = Depends(g
     _revisar_rate_limit(payload.email.lower())
 
     ip = request.client.host if request.client else ""
-    if not await verificar_recaptcha(payload.recaptcha_token, ip):
-        raise HTTPException(400, "Verificacion de reCAPTCHA invalida. Vuelve a marcar la casilla.")
+    if not await verificar_recaptcha(payload.recaptcha_token, "login", ip):
+        raise HTTPException(400, "Verificacion de reCAPTCHA invalida. Vuelve a intentar.")
 
     user = db.query(User).filter(User.email == payload.email, User.activo == True).first()  # noqa: E712
     if not user or not verify_password(payload.password, user.password_hash):

@@ -1,32 +1,29 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { ApiError } from "../api/client";
-import RecaptchaBox, { type RecaptchaHandle } from "../components/RecaptchaBox";
+import { obtenerTokenRecaptcha } from "../api/recaptcha";
 
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [recaptchaToken, setRecaptchaToken] = useState("");
   const [error, setError] = useState("");
-  const recaptchaRef = useRef<RecaptchaHandle>(null);
+  const [cargando, setCargando] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    if (!recaptchaToken) {
-      setError("Marca la casilla de verificacion antes de continuar.");
-      return;
-    }
+    setCargando(true);
     try {
+      const recaptchaToken = await obtenerTokenRecaptcha("login");
       await login(email, password, recaptchaToken);
       navigate("/");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Error de conexion");
-      recaptchaRef.current?.reset();
-      setRecaptchaToken("");
+      setError(err instanceof ApiError ? err.message : err instanceof Error ? err.message : "Error de conexion");
+    } finally {
+      setCargando(false);
     }
   }
 
@@ -51,10 +48,20 @@ export default function Login() {
           className="border border-gray-300 rounded px-3 py-2"
           required
         />
-        <RecaptchaBox ref={recaptchaRef} onToken={setRecaptchaToken} />
-        <button type="submit" className="bg-blue-700 text-white rounded py-2 font-medium mt-2">
-          Ingresar
+        <button disabled={cargando} type="submit" className="bg-blue-700 text-white rounded py-2 font-medium mt-2 disabled:opacity-50">
+          {cargando ? "Verificando..." : "Ingresar"}
         </button>
+        <p className="text-xs text-gray-400 text-center">
+          Este sitio esta protegido por reCAPTCHA y aplican la{" "}
+          <a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer" className="underline">
+            Politica de Privacidad
+          </a>{" "}
+          y los{" "}
+          <a href="https://policies.google.com/terms" target="_blank" rel="noreferrer" className="underline">
+            Terminos de Servicio
+          </a>{" "}
+          de Google.
+        </p>
       </form>
     </div>
   );
