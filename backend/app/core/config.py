@@ -25,6 +25,9 @@ class Settings:
     # Secreto de Google reCAPTCHA v2, usado para verificar el login. La clave publica
     # (site key) va en el frontend, no aqui. Ver services/recaptcha.py.
     RECAPTCHA_SECRET_KEY: str = os.environ.get("RECAPTCHA_SECRET_KEY", "")
+    # reCAPTCHA v3 no tiene casilla: cada intento recibe un puntaje de 0 (bot) a 1
+    # (humano). Por debajo de este umbral se rechaza el login.
+    RECAPTCHA_MIN_SCORE: float = float(os.environ.get("RECAPTCHA_MIN_SCORE", "0.5"))
 
 
 settings = Settings()
