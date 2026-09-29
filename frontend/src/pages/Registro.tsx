@@ -41,7 +41,7 @@ export default function Registro() {
       await refrescar();
       navigate("/perfil");
     } catch (err) {
-      setError(err instanceof ApiError ? String(err.detail) : "Error de conexion");
+      setError(err instanceof ApiError ? err.message : "Error de conexion");
     }
   }
 

@@ -55,7 +55,7 @@ export default function AdminUsuarios() {
       setRolesSeleccionados([]);
       cargar(true);
     } catch (err) {
-      setError(err instanceof ApiError ? String(err.detail) : "Error al crear usuario");
+      setError(err instanceof ApiError ? err.message : "Error al crear usuario");
     }
   }
 
@@ -71,7 +71,7 @@ export default function AdminUsuarios() {
       const r = await api.post<{ password_temporal: string }>(`/api/admin/usuarios/${u.id}/resetear-password`);
       setMensaje(`Contrasena temporal para ${u.email}: ${r.password_temporal} (compartela por un canal seguro; no se volvera a mostrar)`);
     } catch (err) {
-      setError(err instanceof ApiError ? String(err.detail) : "Error al resetear la contrasena");
+      setError(err instanceof ApiError ? err.message : "Error al resetear la contrasena");
     }
   }
 

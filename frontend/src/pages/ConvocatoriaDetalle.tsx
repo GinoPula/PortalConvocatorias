@@ -37,7 +37,7 @@ export default function ConvocatoriaDetalle() {
       setMensaje(`Postulacion registrada. Codigo de constancia: ${p.codigo_constancia}`);
       setTimeout(() => navigate("/mis-postulaciones"), 1500);
     } catch (err) {
-      setMensaje(err instanceof ApiError ? String(err.detail) : "Error al postular");
+      setMensaje(err instanceof ApiError ? err.message : "Error al postular");
     }
   }
 

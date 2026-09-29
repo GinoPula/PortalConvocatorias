@@ -35,7 +35,7 @@ export default function AdminCvScreening() {
       const r = await api.post<ResultadoCv>("/api/admin/cv-screening", form);
       setResultado(r);
     } catch (err) {
-      setError(err instanceof ApiError ? String(err.detail) : "Error al procesar el CV");
+      setError(err instanceof ApiError ? err.message : "Error al procesar el CV");
     } finally {
       setCargando(false);
     }

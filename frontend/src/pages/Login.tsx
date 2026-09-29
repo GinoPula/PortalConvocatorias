@@ -24,7 +24,7 @@ export default function Login() {
       await login(email, password, recaptchaToken);
       navigate("/");
     } catch (err) {
-      setError(err instanceof ApiError ? String(err.detail) : "Error de conexion");
+      setError(err instanceof ApiError ? err.message : "Error de conexion");
       recaptchaRef.current?.reset();
       setRecaptchaToken("");
     }

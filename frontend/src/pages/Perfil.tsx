@@ -60,7 +60,7 @@ export default function Perfil() {
       setMensaje("Cuestionario de perfil guardado.");
       cargarTodo();
     } catch (err) {
-      setMensaje(err instanceof ApiError ? String(err.detail) : "Error al guardar el cuestionario");
+      setMensaje(err instanceof ApiError ? err.message : "Error al guardar el cuestionario");
     }
   }
 
@@ -105,7 +105,7 @@ export default function Perfil() {
       e.currentTarget.reset();
       cargarTodo();
     } catch (err) {
-      setMensaje(err instanceof ApiError ? String(err.detail) : "Error al subir el documento");
+      setMensaje(err instanceof ApiError ? err.message : "Error al subir el documento");
     }
   }
 
