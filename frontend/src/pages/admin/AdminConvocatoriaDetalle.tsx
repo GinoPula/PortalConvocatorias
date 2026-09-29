@@ -50,7 +50,7 @@ export default function AdminConvocatoriaDetalle() {
       setEditando(null);
       cargar();
     } catch (err) {
-      setError(err instanceof ApiError ? String(err.detail) : "Error al editar la plaza");
+      setError(err instanceof ApiError ? err.message : "Error al editar la plaza");
     }
   }
 
@@ -60,7 +60,7 @@ export default function AdminConvocatoriaDetalle() {
       await api.delete(`/api/admin/convocatorias/${id}/plazas/${positionId}`);
       cargar();
     } catch (err) {
-      setError(err instanceof ApiError ? String(err.detail) : "Error al eliminar la plaza");
+      setError(err instanceof ApiError ? err.message : "Error al eliminar la plaza");
     }
   }
 
@@ -76,7 +76,7 @@ export default function AdminConvocatoriaDetalle() {
       e.currentTarget.reset();
       cargar();
     } catch (err) {
-      setError(err instanceof ApiError ? String(err.detail) : "Error al agregar el criterio");
+      setError(err instanceof ApiError ? err.message : "Error al agregar el criterio");
     }
   }
 

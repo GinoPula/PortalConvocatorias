@@ -73,7 +73,7 @@ export default function AdminPostulaciones() {
         seleccionar(actualizado);
       }
     } catch (err) {
-      setError(err instanceof ApiError ? String(err.detail) : "Error al cambiar de estado");
+      setError(err instanceof ApiError ? err.message : "Error al cambiar de estado");
     }
   }
 
@@ -109,7 +109,7 @@ export default function AdminPostulaciones() {
       const rk = await api.get<RankingItem[]>(`/api/admin/plazas/${seleccionada.position_id}/ranking`);
       setRanking(rk);
     } catch (err) {
-      setError(err instanceof ApiError ? String(err.detail) : "Error al registrar evaluacion");
+      setError(err instanceof ApiError ? err.message : "Error al registrar evaluacion");
     }
   }
 
@@ -119,7 +119,7 @@ export default function AdminPostulaciones() {
       const ev = await api.post<Evaluacion>(`/api/admin/postulaciones/${seleccionada.id}/evaluacion/aprobar`);
       setEvaluacion(ev);
     } catch (err) {
-      setError(err instanceof ApiError ? String(err.detail) : "Error al aprobar");
+      setError(err instanceof ApiError ? err.message : "Error al aprobar");
     }
   }
 

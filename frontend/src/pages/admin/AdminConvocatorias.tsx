@@ -57,7 +57,7 @@ export default function AdminConvocatorias() {
       setCodigo("");
       cargar();
     } catch (err) {
-      setError(err instanceof ApiError ? String(err.detail) : "Error al crear");
+      setError(err instanceof ApiError ? err.message : "Error al crear");
     }
   }
 
